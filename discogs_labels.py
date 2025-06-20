@@ -14,6 +14,7 @@ import os   # Import os for path checking
 CONFIG_FILE = "discogs_labels_config.yaml"
 DISCOGS_USER_TOKEN = None
 DISCOGS_USERNAME = None
+DISCOGS_COLLECTION_FOLDER = 0
 
 OUTPUT_PDF_FILENAME = "Discogs_Jukebox_Labels.pdf"
 
@@ -78,9 +79,12 @@ class JukeboxLabelPDFGenerator:
 
         # Extract information from the discogs_client.Release object
         artist = ", ".join([a.name for a in release.artists]) if release.artists else "Unknown Artist"
-        title = release.title if release.title else "Unknown Title"
+        # title = release.title if release.title else "Unknown Title"
         label_name = "Unknown Label"
         catalog_number = "N/A"
+        #print(f"Artist: {artist}")
+        #print(f"Tracks: {release.tracklist}")
+        title = release.tracklist[0].title
 
         # discogs-client's Release object has a .labels attribute which is a list of Label objects
         if release.labels:
@@ -164,7 +168,7 @@ def load_config(config_file_path):
 # --- Main Script Execution ---
 
 def main():
-    global DISCOGS_USER_TOKEN, DISCOGS_USERNAME # Declare global to modify them
+    global DISCOGS_USER_TOKEN, DISCOGS_USERNAME, DISCOGS_COLLECTION_FOLDER  # Declare global to modify them
 
     # Load configuration
     config = load_config(CONFIG_FILE)
@@ -173,6 +177,7 @@ def main():
 
     DISCOGS_USER_TOKEN = config.get("discogs_user_token")
     DISCOGS_USERNAME = config.get("discogs_username")
+    DISCOGS_COLLECTION_FOLDER = config.get("discogs_collection_folder")
 
     if not DISCOGS_USER_TOKEN or not DISCOGS_USERNAME:
         print("ERROR: 'discogs_user_token' or 'discogs_username' missing in the configuration file.")
@@ -180,6 +185,7 @@ def main():
         return
 
     print("--- Starting Discogs Jukebox Label Generator ---")
+    print(f"Fetching from folder: {DISCOGS_COLLECTION_FOLDER}")
 
     # Initialize the Discogs client using the discogs-client library
     # 'User-Agent' is automatically handled by discogs-client
@@ -196,9 +202,12 @@ def main():
         # This handles pagination automatically and returns Release objects
         collection_releases = []
         print(f"Fetching collection for user: {user.username}...")
-        for release_item in user.collection_folders[0].releases: # Folder 0 is "All"
+        for release_item in user.collection_folders[DISCOGS_COLLECTION_FOLDER].releases: # Folder 0 is "All"
+            if len(release_item.release.tracklist) > 2:
+                print(f"Skip: {release_item.release.title} by {', '.join([a.name for a in release_item.release.artists])}")
+                continue
             collection_releases.append(release_item.release) # Get the actual Release object from the CollectionRelease object
-            print(f"Fetched release: {release_item.release.title} by {', '.join([a.name for a in release_item.release.artists])}")
+            print(f"Adding: {release_item.release.title} by {', '.join([a.name for a in release_item.release.artists])}")
             # Small delay to be extra cautious with rate limits, although discogs-client manages it
             time.sleep(0.1)
 
