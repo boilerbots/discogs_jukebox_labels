@@ -1,0 +1,4 @@
+# copy this to discogs_labels_config.yaml
+discogs_user_token: ##__from_your_account__##
+discogs_username: ##__user_name__##
+discogs_collection_folder: 0
