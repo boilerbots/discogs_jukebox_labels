@@ -23,6 +23,8 @@ OUTPUT_PDF_FILENAME = "Discogs_Jukebox_Labels.pdf"
 # often fitting 2-3 per row on an 8.5x11 sheet.
 LABEL_WIDTH = 3.0 * inch # standard for 45 rpms
 LABEL_HEIGHT = 1.0 * inch  # standard for 45 rpms
+TITLE_WIDTH = 2.0 * inch
+TITLE_HEIGHT = 0.20 * inch
 
 # Margins and Spacing for PDF layout
 PAGE_MARGIN_LEFT = 0.5 * inch
@@ -47,6 +49,7 @@ class JukeboxLabelPDFGenerator:
         self.page_width, self.page_height = page_size
         self.current_label_index = 0
         self.current_page_number = 1
+        self.template = "/home/cmeyers/Downloads/labels/labels/Basic Redthick.jpg"
         print(f"Initializing PDF generator: {filename}")
 
     def _calculate_position(self, label_index_on_page):
@@ -74,8 +77,12 @@ class JukeboxLabelPDFGenerator:
 
         x, y = self._calculate_position(self.current_label_index)
 
+        # Background image
+        # self.c.drawImage(self.template, x, y, width=LABEL_WIDTH, mask=None)
+
         # Draw the label border (optional, but good for visual debugging)
         self.c.rect(x, y, LABEL_WIDTH, LABEL_HEIGHT)
+        self.c.rect(x + ((LABEL_WIDTH-TITLE_WIDTH)/2), y + (LABEL_HEIGHT/2) - (TITLE_HEIGHT/2), TITLE_WIDTH, TITLE_HEIGHT)
 
         # Extract information from the discogs_client.Release object
         artist = ", ".join([a.name for a in release.artists]) if release.artists else "Unknown Artist"
@@ -84,7 +91,8 @@ class JukeboxLabelPDFGenerator:
         catalog_number = "N/A"
         #print(f"Artist: {artist}")
         #print(f"Tracks: {release.tracklist}")
-        title = release.tracklist[0].title
+        title_a = release.tracklist[0].title
+        title_b = release.tracklist[1].title
 
         # discogs-client's Release object has a .labels attribute which is a list of Label objects
         if release.labels:
@@ -93,31 +101,49 @@ class JukeboxLabelPDFGenerator:
             catalog_number = primary_label.catno if primary_label.catno else catalog_number
 
         # Content positioning within the label
-        text_x = x + 0.05 * inch # Small padding from left edge
+        text_left_edge = x + 0.05 * inch # Small padding from left edge
+        text_x = x + (LABEL_WIDTH/2) # Center
         text_width = LABEL_WIDTH - 0.1 * inch
 
-        # Title (usually prominent)
-        self.c.setFont("Helvetica-Bold", 10)
+        # Title A side
+        font_size = 10
+        self.c.setFont("Helvetica-Bold", font_size)
         # Wrap title if it's too long
-        title_lines = self._wrap_text(title, "Helvetica-Bold", 10, text_width)
+        title_lines = self._wrap_text(title_a, "Helvetica-Bold", font_size, text_width)
         # Position title near the top of the label
-        title_y_start = y + LABEL_HEIGHT - 0.15 * inch
+        #title_y_start = y + LABEL_HEIGHT - 0.15 * inch
+        title_y_start = y + (3*LABEL_HEIGHT/4) - font_size/2 # center
         for line in title_lines:
-            self.c.drawString(text_x, title_y_start, line)
+            self.c.drawCentredString(text_x, title_y_start, line)
             title_y_start -= 0.15 * inch # Move down for next line
 
         # Artist (below title)
-        self.c.setFont("Helvetica", 8)
-        artist_lines = self._wrap_text(artist, "Helvetica", 8, text_width)
-        artist_y_start = title_y_start - 0.1 * inch # Space below title
+        font_size = 8
+        self.c.setFont("Helvetica", font_size)
+        artist_lines = self._wrap_text(artist, "Helvetica", font_size, text_width)
+        # artist_y_start = title_y_start - 0.1 * inch # Space below title
+        artist_y_start = y + (LABEL_HEIGHT/2) - font_size/2 # center
         for line in artist_lines:
-            self.c.drawString(text_x, artist_y_start, line)
+            self.c.drawCentredString(text_x, artist_y_start, line)
             artist_y_start -= 0.12 * inch # Move down for next line
 
+
+        # Title B side
+        font_size = 10
+        self.c.setFont("Helvetica-Bold", font_size)
+        # Wrap title if it's too long
+        title_lines = self._wrap_text(title_b, "Helvetica-Bold", font_size, text_width)
+        # Position title near the top of the label
+        # title_y_start = y + (LABEL_HEIGHT/2) - 0.15 * inch
+        title_y_start = y + (1*LABEL_HEIGHT/4) - font_size/2 # center
+        for line in title_lines:
+            self.c.drawCentredString(text_x, title_y_start, line)
+            title_y_start -= 0.15 * inch # Move down for next line
+
         # Label and Catalog Number (at the bottom)
-        self.c.setFont("Helvetica", 7)
-        self.c.drawString(text_x, y + 0.15 * inch, f"Label: {label_name}")
-        self.c.drawString(text_x, y + 0.05 * inch, f"Cat#: {catalog_number}")
+        self.c.setFont("Helvetica", 6)
+        self.c.drawString(text_left_edge, y + 0.03 * inch, f"{label_name} {catalog_number}")
+        #self.c.drawString(text_left_edge, y + 0.05 * inch, f"Cat#: {catalog_number}")
 
         self.current_label_index += 1
 
