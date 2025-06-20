@@ -4,7 +4,8 @@ I want to use Discogs to catalog all my jukebox singles.
 
 I want to be able to print jukebox title strips from those collections.
 
-## **WORK IN PROGRESS**
+**WORK IN PROGRESS**
+
 ## How to use this
 
 1. In Discogs create a custom folder for each jukebox you own.
