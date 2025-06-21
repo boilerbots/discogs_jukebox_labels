@@ -51,7 +51,7 @@ class JukeboxLabelPDFGenerator:
         self.page_width, self.page_height = page_size
         self.current_label_index = 0
         self.current_page_number = 1
-        self.template = "/home/cmeyers/Downloads/labels/labels/Basic Redthick.jpg"
+        self.template = "label001.png"
         print(f"Initializing PDF generator: {filename}")
 
     def _calculate_position(self, label_index_on_page):
@@ -80,7 +80,7 @@ class JukeboxLabelPDFGenerator:
         x, y = self._calculate_position(self.current_label_index)
 
         # Background image
-        # self.c.drawImage(self.template, x, y, width=LABEL_WIDTH, mask=None)
+        #self.c.drawImage(self.template, x, y, LABEL_WIDTH, LABEL_HEIGHT, preserveAspectRatio=False)
 
         # Draw the label border (optional, but good for visual debugging)
         self.c.rect(x, y, LABEL_WIDTH, LABEL_HEIGHT)
@@ -91,16 +91,24 @@ class JukeboxLabelPDFGenerator:
         # title = release.title if release.title else "Unknown Title"
         label_name = "Unknown Label"
         catalog_number = "N/A"
-        #print(f"Artist: {artist}")
-        #print(f"Tracks: {release.tracklist}")
-        title_a = release.tracklist[0].title
-        title_b = release.tracklist[1].title
+        print(f"Artist: {artist}")
+        title_a = ""
+        title_b = ""
+        for track in release.tracklist:
+            print(f"  Track {track.position} : {track.title}")
+            if track.position[0] == "A":
+                title_a += track.title
+            if track.position[0] == "B":
+                if len(title_b) > 0:
+                    title_b += " / "
+                title_b += track.title
 
         # discogs-client's Release object has a .labels attribute which is a list of Label objects
+        # print(f"labels: {dir(release)}")
         if release.labels:
             primary_label = release.labels[0]
             label_name = primary_label.name if primary_label.name else label_name
-            catalog_number = primary_label.catno if primary_label.catno else catalog_number
+            catalog_number = primary_label.fetch('catno')  # have to ask for this
 
         # Content positioning within the label
         text_left_edge = x + 0.05 * inch # Small padding from left edge
@@ -232,8 +240,9 @@ def main():
         print(f"Fetching collection for user: {user.username}...")
         for release_item in user.collection_folders[DISCOGS_COLLECTION_FOLDER].releases: # Folder 0 is "All"
             if len(release_item.release.tracklist) > 2:
-                print(f"Skip: {release_item.release.title} by {', '.join([a.name for a in release_item.release.artists])}")
-                continue
+                print(f"Examine: {release_item.release.title} by {', '.join([a.name for a in release_item.release.artists])}")
+                for track in release_item.release.tracklist:
+                    print(f"  Track {track.position} : {track.title}")
             collection_releases.append(release_item.release) # Get the actual Release object from the CollectionRelease object
             print(f"Adding: {release_item.release.title} by {', '.join([a.name for a in release_item.release.artists])}")
             # Small delay to be extra cautious with rate limits, although discogs-client manages it
