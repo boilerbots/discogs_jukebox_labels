@@ -1,3 +1,5 @@
+#!/usr/bin/env python3
+
 import requests # Still needed for potential HTTP errors, but not direct API calls
 from reportlab.lib.pagesizes import letter
 from reportlab.lib.units import inch
