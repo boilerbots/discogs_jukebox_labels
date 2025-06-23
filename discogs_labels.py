@@ -1,10 +1,13 @@
 #!/usr/bin/env python3
 
 import requests # Still needed for potential HTTP errors, but not direct API calls
+from reportlab.graphics import renderPDF
+from reportlab.graphics.shapes import Path, Line
 from reportlab.lib.pagesizes import letter
 from reportlab.lib.units import inch
+from reportlab.lib import colors
 from reportlab.pdfgen import canvas
-from reportlab.lib.colors import black
+from svglib.svglib import svg2rlg
 import time # For rate limiting, though discogs-client has some built-in handling
 import discogs_client # Import the discogs-client library
 import yaml # Import the yaml library for configuration file parsing
@@ -81,10 +84,16 @@ class JukeboxLabelPDFGenerator:
 
         # Background image
         #self.c.drawImage(self.template, x, y, LABEL_WIDTH, LABEL_HEIGHT, preserveAspectRatio=False)
+        drawing = svg2rlg("label001.svg")
+        for obj in drawing.contents:
+            if isinstance(obj, Path) or isinstance(obj, Line):
+                print("Found Line")
+                obj.strokeColor = colors.red
+        renderPDF.draw(drawing, self.c, x, y)
 
         # Draw the label border (optional, but good for visual debugging)
-        self.c.rect(x, y, LABEL_WIDTH, LABEL_HEIGHT)
-        self.c.rect(x + ((LABEL_WIDTH-TITLE_WIDTH)/2), y + (LABEL_HEIGHT/2) - (TITLE_HEIGHT/2), TITLE_WIDTH, TITLE_HEIGHT)
+        # self.c.rect(x, y, LABEL_WIDTH, LABEL_HEIGHT)
+        # self.c.rect(x + ((LABEL_WIDTH-TITLE_WIDTH)/2), y + (LABEL_HEIGHT/2) - (TITLE_HEIGHT/2), TITLE_WIDTH, TITLE_HEIGHT)
 
         # Extract information from the discogs_client.Release object
         artist = ", ".join([a.name for a in release.artists]) if release.artists else "Unknown Artist"
