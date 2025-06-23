@@ -12,6 +12,7 @@ import time # For rate limiting, though discogs-client has some built-in handlin
 import discogs_client # Import the discogs-client library
 import yaml # Import the yaml library for configuration file parsing
 import os   # Import os for path checking
+import xml.etree.ElementTree as etree
 
 # --- Configuration (now loaded from YAML) ---
 # DISCOGS_USER_TOKEN and DISCOGS_USERNAME will be read from discogs_labels_config.yaml
@@ -49,12 +50,13 @@ class JukeboxLabelPDFGenerator:
     """
     Generates a PDF document with jukebox-style labels.
     """
-    def __init__(self, filename, page_size=letter):
+    def __init__(self, filename, config, page_size=letter):
+        self.label_template = config.get("label_template", "label001.svg")
+        self.label_color = config.get("label_color", "#000000")  # Color in RGB
         self.c = canvas.Canvas(filename, pagesize=page_size)
         self.page_width, self.page_height = page_size
         self.current_label_index = 0
         self.current_page_number = 1
-        self.template = "label001.png"
         print(f"Initializing PDF generator: {filename}")
 
     def _calculate_position(self, label_index_on_page):
@@ -68,6 +70,31 @@ class JukeboxLabelPDFGenerator:
         x = PAGE_MARGIN_LEFT + col * (LABEL_WIDTH + HORIZONTAL_SPACING)
         y = self.page_height - PAGE_MARGIN_TOP - (row + 1) * (LABEL_HEIGHT + VERTICAL_SPACING) + VERTICAL_SPACING
         return x, y
+
+    def change_stroke_color(self, in_name, out_name):
+        tree = etree.parse(in_name)
+        root = tree.getroot()
+        new_stroke_color = self.label_color
+        for element in root.iter():
+            # Check if the element has a 'stroke' attribute
+            if 'stroke' in element.attrib:
+                element.set('stroke', new_stroke_color)
+            # Check for 'style' attribute which might contain stroke property
+            if 'style' in element.attrib:
+                style_attr = element.get('style')
+                # Replace existing stroke in style or add it if not present
+                if 'stroke:' in style_attr:
+                    # Use a simple replacement for demonstration; regex might be needed for complex cases
+                    updated_style = []
+                    for prop in style_attr.split(';'):
+                        if prop.strip().startswith('stroke:'):
+                            updated_style.append(f'stroke:{new_stroke_color}')
+                        else:
+                            updated_style.append(prop)
+                    element.set('style', ';'.join(updated_style))
+                else:
+                    element.set('style', f'{style_attr};stroke:{new_stroke_color}')
+        tree.write(out_name)
 
     def add_label(self, release):
         """
@@ -83,12 +110,10 @@ class JukeboxLabelPDFGenerator:
         x, y = self._calculate_position(self.current_label_index)
 
         # Background image
-        #self.c.drawImage(self.template, x, y, LABEL_WIDTH, LABEL_HEIGHT, preserveAspectRatio=False)
-        drawing = svg2rlg("label001.svg")
-        for obj in drawing.contents:
-            if isinstance(obj, Path) or isinstance(obj, Line):
-                print("Found Line")
-                obj.strokeColor = colors.red
+        #self.c.drawImage(self.label_template, x, y, LABEL_WIDTH, LABEL_HEIGHT, preserveAspectRatio=False)
+        self.change_stroke_color(self.label_template, "tmp_label.svg")
+        #drawing = svg2rlg("label001.svg")
+        drawing = svg2rlg("tmp_label.svg")
         renderPDF.draw(drawing, self.c, x, y)
 
         # Draw the label border (optional, but good for visual debugging)
@@ -236,7 +261,7 @@ def main():
     # 'User-Agent' is automatically handled by discogs-client
     # 'request_limit_interval' and 'request_limit' can be adjusted if needed for rate limiting
     d = discogs_client.Client('DiscogsJukeboxLabelGenerator/1.0', user_token=DISCOGS_USER_TOKEN)
-    pdf_generator = JukeboxLabelPDFGenerator(OUTPUT_PDF_FILENAME)
+    pdf_generator = JukeboxLabelPDFGenerator(OUTPUT_PDF_FILENAME, config)
 
     try:
         # Get the user object
