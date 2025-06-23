@@ -36,7 +36,7 @@ TITLE_HEIGHT = 0.20 * inch
 PAGE_MARGIN_LEFT = 0.5 * inch
 PAGE_MARGIN_TOP = 0.5 * inch
 HORIZONTAL_SPACING = 0.125 * inch # Space between labels horizontally
-VERTICAL_SPACING = 0.125 * inch   # Space between labels vertically
+VERTICAL_SPACING = 0.10 * inch   # Space between labels vertically
 
 # Calculate labels per row and per page based on page size and label dimensions
 # Standard letter page is 8.5 x 11 inches
@@ -53,6 +53,8 @@ class JukeboxLabelPDFGenerator:
     def __init__(self, filename, config, page_size=letter):
         self.label_template = config.get("label_template", "label001.svg")
         self.label_color = config.get("label_color", "#000000")  # Color in RGB
+        self.label_show_label = config.get("label_show_label", True)
+        self.label_show_catno = config.get("label_show_catno", True)
         self.c = canvas.Canvas(filename, pagesize=page_size)
         self.page_width, self.page_height = page_size
         self.current_label_index = 0
@@ -150,44 +152,46 @@ class JukeboxLabelPDFGenerator:
         text_width = LABEL_WIDTH - 0.1 * inch
 
         # Title A side
-        font_size = 10
+        font_size = 12
         self.c.setFont("Helvetica-Bold", font_size)
         # Wrap title if it's too long
         title_lines = self._wrap_text(title_a, "Helvetica-Bold", font_size, text_width)
         # Position title near the top of the label
         #title_y_start = y + LABEL_HEIGHT - 0.15 * inch
-        title_y_start = y + (3*LABEL_HEIGHT/4) - font_size/2 # center
+        title_y_start = y + (3*LABEL_HEIGHT/4) # - font_size/2 # center
         for line in title_lines:
             self.c.drawCentredString(text_x, title_y_start, line)
             title_y_start -= 0.15 * inch # Move down for next line
 
         # Artist (below title)
-        font_size = 8
+        font_size = 10
         self.c.setFont("Helvetica", font_size)
         artist_lines = self._wrap_text(artist, "Helvetica", font_size, text_width)
         # artist_y_start = title_y_start - 0.1 * inch # Space below title
-        artist_y_start = y + (LABEL_HEIGHT/2) - font_size/2 # center
+        artist_y_start = y + (LABEL_HEIGHT/2) - font_size/3 # center
         for line in artist_lines:
             self.c.drawCentredString(text_x, artist_y_start, line)
             artist_y_start -= 0.12 * inch # Move down for next line
 
 
         # Title B side
-        font_size = 10
+        font_size = 12
         self.c.setFont("Helvetica-Bold", font_size)
         # Wrap title if it's too long
         title_lines = self._wrap_text(title_b, "Helvetica-Bold", font_size, text_width)
         # Position title near the top of the label
         # title_y_start = y + (LABEL_HEIGHT/2) - 0.15 * inch
-        title_y_start = y + (1*LABEL_HEIGHT/4) - font_size/2 # center
+        title_y_start = y + (1*LABEL_HEIGHT/4) - font_size * 2 / 3 # center
         for line in title_lines:
             self.c.drawCentredString(text_x, title_y_start, line)
             title_y_start -= 0.15 * inch # Move down for next line
 
         # Label and Catalog Number (at the bottom)
         self.c.setFont("Helvetica", 6)
-        self.c.drawString(text_left_edge, y + 0.03 * inch, f"{label_name} {catalog_number}")
-        #self.c.drawString(text_left_edge, y + 0.05 * inch, f"Cat#: {catalog_number}")
+        if self.label_show_label:
+            self.c.drawString(text_left_edge, y + 0.03 * inch, f"{label_name}")
+        if self.label_show_catno:
+            self.c.drawRightString(x + LABEL_WIDTH - 0.05 * inch, y + 0.03 * inch, f"{catalog_number}")
 
         self.current_label_index += 1
 
