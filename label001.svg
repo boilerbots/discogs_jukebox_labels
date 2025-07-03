@@ -15,9 +15,9 @@
    xmlns:svg="http://www.w3.org/2000/svg">
   <sodipodi:namedview
      inkscape:document-units="in"
-     inkscape:zoom="5.33"
-     inkscape:cx="87.335835"
-     inkscape:cy="41.463415"
+     inkscape:zoom="10.66"
+     inkscape:cx="140.66604"
+     inkscape:cy="46.622889"
      id="namedview1"
      pagecolor="#ffffff"
      bordercolor="#000000"
@@ -56,12 +56,12 @@
      id="layer1"
      style="display:inline">
     <rect
-       style="display:inline;fill:none;stroke:#000000;stroke-width:0.05;stroke-opacity:1"
+       style="display:inline;fill:none;stroke:#000000;stroke-width:0.05;stroke-linecap:butt;stroke-linejoin:miter;stroke-dasharray:none;stroke-opacity:1;paint-order:normal"
        id="rect1"
-       width="3"
-       height="1"
-       x="0.0059185624"
-       y="0.0029592812" />
+       width="2.9499998"
+       height="0.95000005"
+       x="0.025"
+       y="0.025" />
     <path
        style="fill:none;stroke:#000000;stroke-width:0.05;stroke-dasharray:none;stroke-opacity:1"
        d="M 2.7999999,0.49999999 3,0.5002482"

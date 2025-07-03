@@ -35,8 +35,8 @@ TITLE_HEIGHT = 0.20 * inch
 # Margins and Spacing for PDF layout
 PAGE_MARGIN_LEFT = 0.5 * inch
 PAGE_MARGIN_TOP = 0.5 * inch
-HORIZONTAL_SPACING = 0.125 * inch  # Space between labels horizontally
-VERTICAL_SPACING = 0.10 * inch  # Space between labels vertically
+HORIZONTAL_SPACING = 0.005 * inch  # Space between labels horizontally
+VERTICAL_SPACING = 0.005 * inch  # Space between labels vertically
 
 # Calculate labels per row and per page based on page size and label dimensions
 # Standard letter page is 8.5 x 11 inches
@@ -100,18 +100,15 @@ class JukeboxLabelPDFGenerator:
             # Check for 'style' attribute which might contain stroke property
             if "style" in element.attrib:
                 style_attr = element.get("style")
-                # Replace existing stroke in style or add it if not present
-                if "stroke:" in style_attr:
-                    # Use a simple replacement for demonstration; regex might be needed for complex cases
-                    updated_style = []
-                    for prop in style_attr.split(";"):
-                        if prop.strip().startswith("stroke:"):
-                            updated_style.append(f"stroke:{new_stroke_color}")
-                        else:
-                            updated_style.append(prop)
-                    element.set("style", ";".join(updated_style))
-                else:
-                    element.set("style", f"{style_attr};stroke:{new_stroke_color}")
+                updated_style = []
+                for prop in style_attr.split(";"):
+                    if prop.strip().startswith("stroke:"):
+                        updated_style.append(f"stroke:{new_stroke_color}")
+                    elif prop.strip().startswith("fill:") and not "none" in prop:
+                        updated_style.append(f"fill:{new_stroke_color}")
+                    else:
+                        updated_style.append(prop)
+                element.set("style", ";".join(updated_style))
         tree.write(out_name)
 
     def add_label(self, release):
@@ -223,10 +220,10 @@ class JukeboxLabelPDFGenerator:
         # Label and Catalog Number (at the bottom)
         self.c.setFont(self.label_font_other, 6)
         if self.label_show_label:
-            self.c.drawString(text_left_edge, y + 0.03 * inch, f"{label_name}")
+            self.c.drawString(text_left_edge, y + 0.06 * inch, f"{label_name}")
         if self.label_show_catno:
             self.c.drawRightString(
-                x + LABEL_WIDTH - 0.05 * inch, y + 0.03 * inch, f"{catalog_number}"
+                x + LABEL_WIDTH - 0.06 * inch, y + 0.06 * inch, f"{catalog_number}"
             )
 
         self.current_label_index += 1
@@ -302,6 +299,7 @@ def main():
     DISCOGS_USER_TOKEN = config.get("discogs_user_token")
     DISCOGS_USERNAME = config.get("discogs_username")
     DISCOGS_COLLECTION_FOLDER = config.get("discogs_collection_folder")
+    test_count = config.get("test_count", 9999)  # limit query number
 
     if not DISCOGS_USER_TOKEN or not DISCOGS_USERNAME:
         print(
@@ -347,8 +345,8 @@ def main():
             print(
                 f"Adding: {release_item.release.title} by {', '.join([a.name for a in release_item.release.artists])}"
             )
-            # Small delay to be extra cautious with rate limits, although discogs-client manages it
-            time.sleep(0.1)
+            if len(collection_releases) == test_count:
+                break
 
         if not collection_releases:
             print("No releases found in your collection. Exiting.")
