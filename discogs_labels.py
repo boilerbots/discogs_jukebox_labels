@@ -55,6 +55,9 @@ class JukeboxLabelPDFGenerator:
         self.label_color = config.get("label_color", "#000000")  # Color in RGB
         self.label_show_label = config.get("label_show_label", True)
         self.label_show_catno = config.get("label_show_catno", True)
+        self.label_font_title = config.get("label_font_title", "Helvetica-Bold")
+        self.label_font_artist = config.get("label_font_artist", "Helvetica")
+        self.label_font_other = config.get("label_font_other", "Helvetica")
         self.c = canvas.Canvas(filename, pagesize=page_size)
         self.page_width, self.page_height = page_size
         self.current_label_index = 0
@@ -132,9 +135,12 @@ class JukeboxLabelPDFGenerator:
         title_b = ""
         for track in release.tracklist:
             print(f"  Track {track.position} : {track.title}")
-            if track.position[0] == "A":
+            # Some singles label second side "AA" if it had a hit song
+            if (track.position[0] == "A") and not (track.position == "AA"):
+                if len(title_a) > 0:
+                    title_a += " / "
                 title_a += track.title
-            if track.position[0] == "B":
+            if (track.position[0] == "B") or (track.position == "AA"):
                 if len(title_b) > 0:
                     title_b += " / "
                 title_b += track.title
@@ -153,20 +159,21 @@ class JukeboxLabelPDFGenerator:
 
         # Title A side
         font_size = 12
-        self.c.setFont("Helvetica-Bold", font_size)
+        font_size = self._fit_text(title_a, self.label_font_title, font_size, text_width)
         # Wrap title if it's too long
-        title_lines = self._wrap_text(title_a, "Helvetica-Bold", font_size, text_width)
+        title_lines = self._wrap_text(title_a, self.label_font_title, font_size, text_width)
         # Position title near the top of the label
         #title_y_start = y + LABEL_HEIGHT - 0.15 * inch
         title_y_start = y + (3*LABEL_HEIGHT/4) # - font_size/2 # center
+        self.c.setFont(self.label_font_title, font_size)
         for line in title_lines:
             self.c.drawCentredString(text_x, title_y_start, line)
             title_y_start -= 0.15 * inch # Move down for next line
 
         # Artist (below title)
         font_size = 10
-        self.c.setFont("Helvetica", font_size)
-        artist_lines = self._wrap_text(artist, "Helvetica", font_size, text_width)
+        self.c.setFont(self.label_font_artist, font_size)
+        artist_lines = self._wrap_text(artist, self.label_font_artist, font_size, text_width)
         # artist_y_start = title_y_start - 0.1 * inch # Space below title
         artist_y_start = y + (LABEL_HEIGHT/2) - font_size/3 # center
         for line in artist_lines:
@@ -176,18 +183,19 @@ class JukeboxLabelPDFGenerator:
 
         # Title B side
         font_size = 12
-        self.c.setFont("Helvetica-Bold", font_size)
+        font_size = self._fit_text(title_b, self.label_font_title, font_size, text_width)
         # Wrap title if it's too long
-        title_lines = self._wrap_text(title_b, "Helvetica-Bold", font_size, text_width)
+        title_lines = self._wrap_text(title_b, self.label_font_title, font_size, text_width)
         # Position title near the top of the label
         # title_y_start = y + (LABEL_HEIGHT/2) - 0.15 * inch
         title_y_start = y + (1*LABEL_HEIGHT/4) - font_size * 2 / 3 # center
+        self.c.setFont(self.label_font_title, font_size)
         for line in title_lines:
             self.c.drawCentredString(text_x, title_y_start, line)
             title_y_start -= 0.15 * inch # Move down for next line
 
         # Label and Catalog Number (at the bottom)
-        self.c.setFont("Helvetica", 6)
+        self.c.setFont(self.label_font_other, 6)
         if self.label_show_label:
             self.c.drawString(text_left_edge, y + 0.03 * inch, f"{label_name}")
         if self.label_show_catno:
@@ -211,6 +219,18 @@ class JukeboxLabelPDFGenerator:
                 current_line = [word]
         lines.append(' '.join(current_line)) # Add the last line
         return lines
+
+
+    def _fit_text(self, text, font_name, font_size, max_width):
+        """Helper to shrink text to fit within a given width."""
+        size = font_size
+        while size > 6:
+            self.c.setFont(font_name, size)
+            if self.c.stringWidth(text) <= max_width:
+                return size
+            else:
+                size -= 2
+        return size
 
 
     def save_pdf(self):
