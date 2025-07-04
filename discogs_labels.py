@@ -13,6 +13,7 @@ import discogs_client  # Import the discogs-client library
 import yaml  # Import the yaml library for configuration file parsing
 import os  # Import os for path checking
 import xml.etree.ElementTree as etree
+import re
 
 # --- Configuration (now loaded from YAML) ---
 # DISCOGS_USER_TOKEN and DISCOGS_USERNAME will be read from discogs_labels_config.yaml
@@ -41,11 +42,11 @@ VERTICAL_SPACING = 0.005 * inch  # Space between labels vertically
 # Calculate labels per row and per page based on page size and label dimensions
 # Standard letter page is 8.5 x 11 inches
 LABELS_PER_ROW = int(
-    (letter[0] - 2 * PAGE_MARGIN_LEFT + HORIZONTAL_SPACING)
+    (letter[0] - PAGE_MARGIN_LEFT + HORIZONTAL_SPACING)
     / (LABEL_WIDTH + HORIZONTAL_SPACING)
 )
 LABELS_PER_COLUMN = int(
-    (letter[1] - 2 * PAGE_MARGIN_TOP + VERTICAL_SPACING)
+    (letter[1] - PAGE_MARGIN_TOP + VERTICAL_SPACING)
     / (LABEL_HEIGHT + VERTICAL_SPACING)
 )
 LABELS_PER_PAGE = LABELS_PER_ROW * LABELS_PER_COLUMN
@@ -61,16 +62,19 @@ class JukeboxLabelPDFGenerator:
     def __init__(self, filename, config, page_size=letter):
         self.label_template = config.get("label_template", "label001.svg")
         self.label_color = config.get("label_color", "#000000")  # Color in RGB
+        self.label_color_fill = config.get("label_color_fill", "#FF0000")  # Color in RGB
+        self.label_color_fill_opacity = config.get("label_color_fill_opacity", 0.24)
         self.label_show_label = config.get("label_show_label", True)
         self.label_show_catno = config.get("label_show_catno", True)
         self.label_font_title = config.get("label_font_title", "Helvetica-Bold")
         self.label_font_artist = config.get("label_font_artist", "Helvetica")
         self.label_font_other = config.get("label_font_other", "Helvetica")
+        print(f"Initializing PDF generator: {filename}")
         self.c = canvas.Canvas(filename, pagesize=page_size)
         self.page_width, self.page_height = page_size
         self.current_label_index = 0
         self.current_page_number = 1
-        print(f"Initializing PDF generator: {filename}")
+        self.change_stroke_color(self.label_template, "tmp_label.svg")
 
     def _calculate_position(self, label_index_on_page):
         """
@@ -93,19 +97,28 @@ class JukeboxLabelPDFGenerator:
         tree = etree.parse(in_name)
         root = tree.getroot()
         new_stroke_color = self.label_color
+        new_fill_color = self.label_color_fill
+        new_opacity = self.label_color_fill_opacity
         for element in root.iter():
             # Check if the element has a 'stroke' attribute
-            if "stroke" in element.attrib:
-                element.set("stroke", new_stroke_color)
+            #if "stroke" in element.attrib:
+            #    element.set("stroke", new_stroke_color)
             # Check for 'style' attribute which might contain stroke property
             if "style" in element.attrib:
                 style_attr = element.get("style")
                 updated_style = []
                 for prop in style_attr.split(";"):
-                    if prop.strip().startswith("stroke:"):
+                    prop = prop.strip()
+                    if prop.startswith("stroke:"):
                         updated_style.append(f"stroke:{new_stroke_color}")
-                    elif prop.strip().startswith("fill:") and not "none" in prop:
-                        updated_style.append(f"fill:{new_stroke_color}")
+                    #elif prop.startswith("fill:") and not "none" in prop:
+                    #elif prop.startswith("fill:") and re.search(r"rect", element.tag):
+                    elif prop.startswith("fill:"):
+                        updated_style.append(f"fill:{new_fill_color}")
+                        new_fill_color = "#FFFFFF"
+                    elif prop.startswith("fill-opacity:"):
+                        updated_style.append(f"fill-opacity:{new_opacity}")
+                        new_opacity = 1.0
                     else:
                         updated_style.append(prop)
                 element.set("style", ";".join(updated_style))
@@ -126,7 +139,6 @@ class JukeboxLabelPDFGenerator:
 
         # Background image
         # self.c.drawImage(self.label_template, x, y, LABEL_WIDTH, LABEL_HEIGHT, preserveAspectRatio=False)
-        self.change_stroke_color(self.label_template, "tmp_label.svg")
         # drawing = svg2rlg("label001.svg")
         drawing = svg2rlg("tmp_label.svg")
         renderPDF.draw(drawing, self.c, x, y)
@@ -147,17 +159,23 @@ class JukeboxLabelPDFGenerator:
         print(f"Artist: {artist}")
         title_a = ""
         title_b = ""
-        for track in release.tracklist:
-            print(f"  Track {track.position} : {track.title}")
-            # Some singles label second side "AA" if it had a hit song
-            if (track.position[0] == "A") and not (track.position == "AA"):
-                if len(title_a) > 0:
-                    title_a += " / "
-                title_a += track.title
-            if (track.position[0] == "B") or (track.position == "AA"):
-                if len(title_b) > 0:
-                    title_b += " / "
-                title_b += track.title
+        if len(release.tracklist) == 2:
+            title_a = release.tracklist[0].title
+            title_b = release.tracklist[1].title
+        else:
+            for track in release.tracklist:
+                print(f"  Track {track.position} : {track.title}")
+                if len(track.position) == 0:  # because of [r1589174]
+                    continue
+                # Some singles label second side "AA" if it had a hit song
+                if (track.position[0] == "A") and not (track.position == "AA"):
+                    if len(title_a) > 0:
+                        title_a += " / "
+                    title_a += track.title
+                if (track.position[0] == "B") or (track.position == "AA"):
+                    if len(title_b) > 0:
+                        title_b += " / "
+                    title_b += track.title
 
         # discogs-client's Release object has a .labels attribute which is a list of Label objects
         # print(f"labels: {dir(release)}")
