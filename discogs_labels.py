@@ -348,9 +348,7 @@ def main():
         # This handles pagination automatically and returns Release objects
         collection_releases = []
         print(f"Fetching collection for user: {user.username}...")
-        for release_item in user.collection_folders[
-            DISCOGS_COLLECTION_FOLDER
-        ].releases:  # Folder 0 is "All"
+        for release_item in user.collection_folders[DISCOGS_COLLECTION_FOLDER].releases:  # Folder 0 is "All"
             if len(release_item.release.tracklist) > 2:
                 print(
                     f"Examine: {release_item.release.title} by {', '.join([a.name for a in release_item.release.artists])}"
@@ -365,6 +363,7 @@ def main():
             )
             if len(collection_releases) == test_count:
                 break
+            time.sleep(1.0)  # throttle our calls
 
         if not collection_releases:
             print("No releases found in your collection. Exiting.")
