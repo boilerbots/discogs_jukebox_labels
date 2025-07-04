@@ -61,9 +61,9 @@ class JukeboxLabelPDFGenerator:
 
     def __init__(self, filename, config, page_size=letter):
         self.label_template = config.get("label_template", "label001.svg")
-        self.label_color = config.get("label_color", "#000000")  # Color in RGB
+        self.label_color = config.get("label_color", "#FF0000")  # Color in RGB
         self.label_color_fill = config.get("label_color_fill", "#FF0000")  # Color in RGB
-        self.label_color_fill_opacity = config.get("label_color_fill_opacity", 0.24)
+        self.label_color_fill_opacity = config.get("label_color_fill_opacity", 0.25)
         self.label_show_label = config.get("label_show_label", True)
         self.label_show_catno = config.get("label_show_catno", True)
         self.label_font_title = config.get("label_font_title", "Helvetica-Bold")
