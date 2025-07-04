@@ -2,4 +2,5 @@
 discogs_user_token: ##__from_your_account__##
 discogs_username: ##__user_name__##
 discogs_collection_folder: 0
-label_color: "#000000"
+label_color: "#FF0000"
+label_template: label004.svg
