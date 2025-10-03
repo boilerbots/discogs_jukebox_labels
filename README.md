@@ -12,9 +12,22 @@ I want to be able to print jukebox title strips from those collections.
 [Green Color](examples/example_output_green.pdf)
 
 ## Install dependencies
+
+Clone the repository or download the project as a zip and extract it.
+Make sure you have python3.10 or newer installed.
+
+On Linux in the project directory.
 ```
 python3 -m venv venv
 source venv/bin/activate
+pip install -r requirements.txt
+```
+
+On Windows open a CMD window.
+Get into the project directory in the CMD window, run the following commands.
+```
+python3.exe -m venv venv
+source venv\Scripts\activate
 pip install -r requirements.txt
 ```
 
