@@ -1,4 +1,4 @@
-import pyaudio
+import sounddevice as sd
 import wave
 import os
 import json
@@ -8,6 +8,7 @@ import hmac
 import time
 import requests
 import yaml
+import numpy as np
 from datetime import datetime
 
 class ACRCloudRecognizer:
@@ -217,40 +218,28 @@ class AudioRecorder:
         self.duration = duration
         self.sample_rate = sample_rate
         self.channels = channels
-        self.chunk = 1024
         
     def record(self, output_file="temp_recording.wav"):
         """Record audio from microphone"""
-        p = pyaudio.PyAudio()
-        
         print(f"Recording for {self.duration} seconds...")
         
-        stream = p.open(
-            format=pyaudio.paInt16,
+        # Record audio
+        recording = sd.rec(
+            int(self.duration * self.sample_rate),
+            samplerate=self.sample_rate,
             channels=self.channels,
-            rate=self.sample_rate,
-            input=True,
-            frames_per_buffer=self.chunk
+            dtype='int16'
         )
-        
-        frames = []
-        for i in range(0, int(self.sample_rate / self.chunk * self.duration)):
-            data = stream.read(self.chunk)
-            frames.append(data)
+        sd.wait()  # Wait until recording is finished
         
         print("Recording complete!")
         
-        stream.stop_stream()
-        stream.close()
-        p.terminate()
-        
         # Save to WAV file
-        wf = wave.open(output_file, 'wb')
-        wf.setnchannels(self.channels)
-        wf.setsampwidth(p.get_sample_size(pyaudio.paInt16))
-        wf.setframerate(self.sample_rate)
-        wf.writeframes(b''.join(frames))
-        wf.close()
+        with wave.open(output_file, 'wb') as wf:
+            wf.setnchannels(self.channels)
+            wf.setsampwidth(2)  # 2 bytes for int16
+            wf.setframerate(self.sample_rate)
+            wf.writeframes(recording.tobytes())
         
         return output_file
 
