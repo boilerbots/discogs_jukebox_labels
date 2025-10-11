@@ -1,0 +1,6 @@
+# copy this to id_config.yaml
+acrcloud_access_key: "YOUR_ACRCLOUD_ACCESS_KEY"
+acrcloud_access_secret: "YOUR_ACRCLOUD_ACCESS_SECRET"
+acrcloud_host: "identify-us-west-2.acrcloud.com"
+discogs_user_agent: "VinylSingleFinder/1.0"
+discogs_token: "YOUR_DISCOGS_TOKEN"
