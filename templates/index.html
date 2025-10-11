@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Discogs Jukebox Label Maker</title>
+    <link rel="stylesheet" href="/static/css/style.css">
+</head>
+<body>
+    <div class="container">
+        <h1>Discogs Jukebox Label Maker</h1>
+
+        <div class="folder-container">
+            <label for="folder-name">Discogs Folder Name:</label>
+            <input type="text" id="folder-name" placeholder="Enter folder name">
+            <button id="set-folder-button">Set Folder</button>
+        </div>
+
+        <div class="slot-container">
+            <label>Slot Counter:</label>
+            <span id="slot-counter">1</span>
+            <button id="decrement-slot">-</button>
+            <button id="increment-slot">+</button>
+        </div>
+
+        <div id="status">Ready</div>
+
+        <button id="start-identification-button" disabled>Start Identification</button>
+
+        <div class="results-container">
+            <h2>Search Results</h2>
+            <ul id="results-list"></ul>
+        </div>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.0.1/socket.io.js"></script>
+    <script src="/static/js/main.js"></script>
+</body>
+</html>
