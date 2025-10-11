@@ -38,13 +38,13 @@ Copy **discogs_labels_config_example.yaml** to **discogs_labels_config.yaml** an
 cp discogs_labels_config_example.yaml discogs_labels_config.yaml
 nano discogs_labels_config.yaml
 ```
-Set **discogs_username** and **discogs_user_token**
+Set **discogs_user_token**
 
 ## How to use this
 
 1. In Discogs create a custom folder for each jukebox or label style/color.
 2. Move your collection items to the appropriate folder.
-3. Change the **discogs_collection_folder** in the yaml file, it takes trial and error here.
+3. Change the **discogs_collection_folder** in the yaml file to the name of the folder you want to print.
 4. Run the script `discogs_labels.py`
 5. View the generated PDF file **Discogs_Jukebox_Labels.pdf**
 

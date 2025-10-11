@@ -16,11 +16,10 @@ import xml.etree.ElementTree as etree
 import re
 
 # --- Configuration (now loaded from YAML) ---
-# DISCOGS_USER_TOKEN and DISCOGS_USERNAME will be read from discogs_labels_config.yaml
+# DISCOGS_USER_TOKEN will be read from discogs_labels_config.yaml
 
 CONFIG_FILE = "discogs_labels_config.yaml"
 DISCOGS_USER_TOKEN = None
-DISCOGS_USERNAME = None
 DISCOGS_COLLECTION_FOLDER = 0
 
 OUTPUT_PDF_FILENAME = "Discogs_Jukebox_Labels.pdf"
@@ -291,7 +290,6 @@ def load_config(config_file_path):
         print(f"ERROR: Configuration file '{config_file_path}' not found.")
         print("Please create a YAML file with the following structure:")
         print("discogs_user_token: YOUR_DISCOGS_USER_TOKEN")
-        print("discogs_username: YOUR_DISCOGS_USERNAME")
         return None
 
     try:
@@ -307,7 +305,7 @@ def load_config(config_file_path):
 
 
 def main():
-    global DISCOGS_USER_TOKEN, DISCOGS_USERNAME, DISCOGS_COLLECTION_FOLDER  # Declare global to modify them
+    global DISCOGS_USER_TOKEN, DISCOGS_COLLECTION_FOLDER  # Declare global to modify them
 
     # Load configuration
     config = load_config(CONFIG_FILE)
@@ -315,16 +313,15 @@ def main():
         return
 
     DISCOGS_USER_TOKEN = config.get("discogs_user_token")
-    DISCOGS_USERNAME = config.get("discogs_username")
     DISCOGS_COLLECTION_FOLDER = config.get("discogs_collection_folder")
     test_count = config.get("test_count", 9999)  # limit query number
 
-    if not DISCOGS_USER_TOKEN or not DISCOGS_USERNAME:
+    if not DISCOGS_USER_TOKEN:
         print(
-            "ERROR: 'discogs_user_token' or 'discogs_username' missing in the configuration file."
+            "ERROR: 'discogs_user_token' missing in the configuration file."
         )
         print(
-            "Please ensure your 'discogs_labels_config.yaml' file contains both keys."
+            "Please ensure your 'discogs_labels_config.yaml' file contains the token."
         )
         return
 
@@ -344,11 +341,27 @@ def main():
         user = d.identity()
         print(f"Authenticated as Discogs user: {user.username}")
 
-        # Fetch collection releases directly using the discogs-client library
-        # This handles pagination automatically and returns Release objects
+        # Find the target folder by name
+        target_folder = None
+        if DISCOGS_COLLECTION_FOLDER:
+            for folder in user.collection_folders:
+                if folder.name == DISCOGS_COLLECTION_FOLDER:
+                    target_folder = folder
+                    break
+        
+        if not target_folder:
+            print(f"ERROR: Could not find a Discogs collection folder named '{DISCOGS_COLLECTION_FOLDER}'.")
+            folder_names = [f.name for f in user.collection_folders]
+            if folder_names:
+                print(f"Available folders are: {', '.join(folder_names)}")
+            else:
+                print("You have no collection folders.")
+            return
+
+        # Fetch collection releases from the found folder
         collection_releases = []
-        print(f"Fetching collection for user: {user.username}...")
-        for release_item in user.collection_folders[DISCOGS_COLLECTION_FOLDER].releases:  # Folder 0 is "All"
+        print(f"Fetching collection for user: {user.username} from folder '{target_folder.name}'...")
+        for release_item in target_folder.releases:
             if len(release_item.release.tracklist) > 2:
                 print(
                     f"Examine: {release_item.release.title} by {', '.join([a.name for a in release_item.release.artists])}"
