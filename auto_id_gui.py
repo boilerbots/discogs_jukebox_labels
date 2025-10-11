@@ -6,6 +6,7 @@ GUI for the Discogs Jukebox Label Maker.
 import tkinter as tk
 from tkinter import ttk, messagebox
 import threading
+import re
 import os
 
 from auto_id_core import (
@@ -125,7 +126,10 @@ class App(tk.Tk):
 
         if result.get("status", {}).get("msg") == "Success":
             metadata = result["metadata"]["music"][0]
-            title = metadata["title"]
+            raw_title = metadata["title"]
+            clean_title = re.sub(r"\s*\(.*?\)", "", raw_title)
+            clean_title = re.sub(r"\s*\[.*?\]", "", clean_title)
+            title = clean_title.strip()
             artists = ", ".join([a["name"] for a in metadata["artists"]])
             self.releases = self.discogs_api.search_releases(title, artists)
             self.after(0, self.update_ui_after_identification, f"Found {len(self.releases)} releases for {title} by {artists}")

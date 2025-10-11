@@ -1,3 +1,9 @@
-venv/
-Discogs_Jukebox_Labels.pdf
-discogs_labels_config.yaml
+.env
+venc/
+*.pyc
+__pycache__/
+.DS_Store
+temp_recording.wav
+cert.pem
+key.pem
+

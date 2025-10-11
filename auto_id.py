@@ -4,6 +4,7 @@ Command-line interface for the Discogs Jukebox Label Maker.
 """
 
 import argparse
+import re
 import sys
 
 from auto_id_core import (
@@ -64,7 +65,10 @@ def main():
 
         if result.get("status", {}).get("msg") == "Success":
             metadata = result["metadata"]["music"][0]
-            title = metadata["title"]
+            raw_title = metadata["title"]
+            clean_title = re.sub(r"\s*\(.*?\)", "", raw_title)
+            clean_title = re.sub(r"\s*\[.*?\]", "", clean_title)
+            title = clean_title.strip()
             artists = ", ".join([a["name"] for a in metadata["artists"]])
             print(f"\n✓ Song Identified: {title} by {artists}")
 

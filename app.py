@@ -3,6 +3,7 @@
 Flask web server for the Discogs Jukebox Label Maker.
 """
 
+import re
 from flask import Flask, render_template
 from flask_socketio import SocketIO
 
@@ -61,7 +62,11 @@ def handle_identify(audio_data):
 
     if result.get("status", {}).get("msg") == "Success":
         metadata = result["metadata"]["music"][0]
-        title = metadata["title"]
+        raw_title = metadata["title"]
+        # Remove text in parentheses and brackets
+        clean_title = re.sub(r"\s*\(.*?\)", "", raw_title)
+        clean_title = re.sub(r"\s*\[.*?\]", "", clean_title)
+        title = clean_title.strip()
         artists = ", ".join([a["name"] for a in metadata["artists"]])
         SocketIO.emit("status", {"message": f"Searching for {title} by {artists}..."})
         releases = discogs_api.search_releases(title, artists)
