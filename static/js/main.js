@@ -121,10 +121,10 @@ document.addEventListener("DOMContentLoaded", () => {
                     });
                 });
             });
-        } else {
+        }/* else {
             resultsList.innerHTML = "<li>No results found.</li>";
             statusDiv.textContent = "No matching releases found.";
-        }
+        }*/
         startButton.disabled = false;
     });
 

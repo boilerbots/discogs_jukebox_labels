@@ -156,24 +156,36 @@ class DiscogsAPI:
             "artist": artist,
             "type": "release",
             "format": "Vinyl",
-            "country": self.country,
+            #"country": self.country,
         }
+        print(f"Searching for {params}")
         try:
             response = requests.get(f"{self.base_url}/database/search", headers=self.headers, params=params)
             response.raise_for_status()
-            results = [
-                r for r in response.json()["results"]
-                if all(f in str(r.get("format", [])).lower() for f in ["single", '7"'])
-            ]
+            data = response.json()
+            all_results = data.get('results', [])
+            results = []
+
+            for r in all_results:
+                formats = r.get("format", [])
+                is_single = all(f in str(formats).lower() for f in ["single", '7"', '45'])
+                if is_single and r.get('country', '') == self.country:
+                    results.append(r)
+
             if not results:
-                print(f"No results found for country '{self.country}', searching all countries...")
-                del params["country"]
-                response = requests.get(f"{self.base_url}/database/search", headers=self.headers, params=params)
-                response.raise_for_status()
-                results = [
-                    r for r in response.json()["results"]
-                    if all(f in str(r.get("format", [])).lower() for f in ["single", '7"'])
-                ]
+                print(f"No matches, just send everything")
+                for r in all_results:
+                    results.append(r)
+
+            #if not results:
+            #    print(f"No results found for country '{self.country}', searching all countries...")
+            #    del params["country"]
+            #    response = requests.get(f"{self.base_url}/database/search", headers=self.headers, params=params)
+            #    response.raise_for_status()
+            #    results = [
+            #        r for r in response.json()["results"]
+            #        if all(f in str(r.get("format", [])).lower() for f in ["single", '7"'])
+            #    ]
             return results
         except requests.RequestException as e:
             print(f"Error searching releases: {e}")

@@ -81,4 +81,4 @@ def handle_add_release(data):
         SocketIO.emit("error", {"message": "Could not add release."})
 
 if __name__ == "__main__":
-    SocketIO.run(app, debug=True)
+    SocketIO.run(app, debug=True, host="0.0.0.0", port=5000, ssl_context=('cert.pem', 'key.pem'))
