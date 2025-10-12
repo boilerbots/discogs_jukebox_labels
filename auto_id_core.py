@@ -19,55 +19,38 @@ import yaml
 CONFIG_FILE = "id_config.yaml"
 
 
-class ACRCloudRecognizer:
-    """Recognizes audio using the ACRCloud API."""
+import asyncio
+from shazamio import Shazam
 
-    def __init__(self, access_key, access_secret, host):
-        self.access_key = access_key
-        self.access_secret = access_secret
-        self.host = host
+CONFIG_FILE = "id_config.yaml"
 
-    def recognize(self, audio_file):
-        """Recognize audio using ACRCloud API"""
-        http_method = "POST"
-        http_uri = "/v1/identify"
-        data_type = "audio"
-        signature_version = "1"
-        timestamp = str(int(time.time()))
 
-        string_to_sign = (
-            f"{http_method}\n{http_uri}\n{self.access_key}\n"
-            f"{data_type}\n{signature_version}\n{timestamp}"
-        )
-        sign = base64.b64encode(
-            hmac.new(
-                self.access_secret.encode("utf-8"),
-                string_to_sign.encode("utf-8"),
-                digestmod=hashlib.sha1,
-            ).digest()
-        ).decode("utf-8")
+class ShazamRecognizer:
+    """Recognizes audio using the Shazam API via shazamio."""
 
-        with open(audio_file, "rb") as f:
-            sample_bytes = f.read()
-
-        files = {"sample": (audio_file, sample_bytes)}
-        data = {
-            "access_key": self.access_key,
-            "sample_bytes": len(sample_bytes),
-            "timestamp": timestamp,
-            "signature": sign,
-            "data_type": data_type,
-            "signature_version": signature_version,
-        }
-
-        url = f"https://{self.host}{http_uri}"
+    async def recognize(self, audio_file):
+        """Recognize audio using Shazam API"""
         try:
-            response = requests.post(url, files=files, data=data, timeout=10)
-            return response.json()
-        except requests.Timeout:
-            return {"status": {"msg": "Request timed out"}}
-        except requests.RequestException as e:
-            return {"status": {"msg": f"Request failed: {e}"}}
+            shazam = Shazam()
+            track = await shazam.recognize_song(audio_file)
+            if track and track.get('track'):
+                track_info = track['track']
+                return {
+                    "status": {"msg": "Success"},
+                    "metadata": {
+                        "music": [
+                            {
+                                "title": track_info.get('title', 'Unknown Title'),
+                                "artists": [{"name": track_info.get('subtitle', 'Unknown Artist')}],
+                            }
+                        ]
+                    },
+                }
+            else:
+                return {"status": {"msg": "No match found."}}
+        except Exception as e:
+            print(f"Error during Shazam recognition: {e}")
+            return {"status": {"msg": f"Recognition failed: {e}"}}
 
 
 class AudioRecorder:

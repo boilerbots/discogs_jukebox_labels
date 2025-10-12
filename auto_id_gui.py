@@ -6,11 +6,12 @@ GUI for the Discogs Jukebox Label Maker.
 import tkinter as tk
 from tkinter import ttk, messagebox
 import threading
+import asyncio
 import re
 import os
 
 from auto_id_core import (
-    ACRCloudRecognizer,
+    ShazamRecognizer,
     AudioRecorder,
     load_config,
     DiscogsAPI,
@@ -39,11 +40,7 @@ class App(tk.Tk):
             return
 
         self.recorder = AudioRecorder(duration=10)
-        self.recognizer = ACRCloudRecognizer(
-            self.config.get("acrcloud_access_key"),
-            self.config.get("acrcloud_access_secret"),
-            self.config.get("acrcloud_host"),
-        )
+        self.recognizer = ShazamRecognizer()
 
         self.folder = None
         self.slot_counter = 1
@@ -121,7 +118,7 @@ class App(tk.Tk):
 
     def identify_and_display(self):
         audio_file = self.recorder.record()
-        result = self.recognizer.recognize(audio_file)
+        result = asyncio.run(self.recognizer.recognize(audio_file))
         os.remove(audio_file)
 
         if result.get("status", {}).get("msg") == "Success":

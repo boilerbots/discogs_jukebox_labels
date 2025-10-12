@@ -3,12 +3,13 @@
 Flask web server for the Discogs Jukebox Label Maker.
 """
 
+import asyncio
 import re
 from flask import Flask, render_template
 from flask_socketio import SocketIO
 
 from auto_id_core import (
-    ACRCloudRecognizer,
+    ShazamRecognizer,
     AudioRecorder,
     load_config,
     DiscogsAPI,
@@ -29,11 +30,7 @@ discogs_api = DiscogsAPI(
 )
 
 recorder = AudioRecorder(duration=10)
-recognizer = ACRCloudRecognizer(
-    config.get("acrcloud_access_key"),
-    config.get("acrcloud_access_secret"),
-    config.get("acrcloud_host"),
-)
+recognizer = ShazamRecognizer()
 
 @app.route("/")
 def index():
@@ -58,7 +55,7 @@ def handle_identify(audio_data):
         f.write(audio_data)
 
     SocketIO.emit("status", {"message": "Identifying..."})
-    result = recognizer.recognize(audio_file)
+    result = asyncio.run(recognizer.recognize(audio_file))
 
     if result.get("status", {}).get("msg") == "Success":
         metadata = result["metadata"]["music"][0]

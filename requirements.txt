@@ -4,3 +4,4 @@ sounddevice
 numpy
 Flask
 Flask-SocketIO
+shazamio

@@ -4,11 +4,12 @@ Command-line interface for the Discogs Jukebox Label Maker.
 """
 
 import argparse
+import asyncio
 import re
 import sys
 
 from auto_id_core import (
-    ACRCloudRecognizer,
+    ShazamRecognizer,
     AudioRecorder,
     load_config,
     DiscogsAPI,
@@ -51,17 +52,13 @@ def main():
     if not folder:
         return
 
-    recorder = ACRCloudRecognizer(
-        config.get("acrcloud_access_key"),
-        config.get("acrcloud_access_secret"),
-        config.get("acrcloud_host"),
-    )
+    recognizer = ShazamRecognizer()
     audio_recorder = AudioRecorder(duration=10)
     slot_counter = 1
 
     while True:
         audio_file = audio_recorder.record()
-        result = recorder.recognize(audio_file)
+        result = asyncio.run(recognizer.recognize(audio_file))
 
         if result.get("status", {}).get("msg") == "Success":
             metadata = result["metadata"]["music"][0]

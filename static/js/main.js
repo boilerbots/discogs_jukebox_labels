@@ -11,7 +11,7 @@ document.addEventListener("DOMContentLoaded", () => {
     const resultsList = document.getElementById("results-list");
 
     let folderId = null;
-    let slotCounter = 1;
+    let slotCounter = 0;
     let mediaRecorder;
     let audioChunks = [];
     let stream;
