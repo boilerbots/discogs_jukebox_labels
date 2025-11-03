@@ -17,7 +17,7 @@ import re
 
 def resource_path(relative_path):
     """ Get absolute path to resource, works for dev and for PyInstaller """
-    return os.path.abspath(os.path.join(os.path.dirname("__file__"), relative_path))
+    return os.path.abspath(os.path.join(os.path.dirname(__file__), relative_path))
 
 # --- Configuration (now loaded from YAML) ---
 # DISCOGS_USER_TOKEN will be read from discogs_labels_config.yaml
