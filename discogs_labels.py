@@ -15,6 +15,15 @@ import os  # Import os for path checking
 import xml.etree.ElementTree as etree
 import re
 
+def resource_path(relative_path):
+    """ Get absolute path to resource, works for dev and for PyInstaller """
+    try:
+        # PyInstaller creates a temp folder and stores path in _MEIPASS
+        base_path = sys._MEIPASS
+    except Exception:
+        base_path = os.path.abspath(".")
+    return os.path.join(base_path, relative_path)
+
 # --- Configuration (now loaded from YAML) ---
 # DISCOGS_USER_TOKEN will be read from discogs_labels_config.yaml
 
@@ -59,7 +68,8 @@ class JukeboxLabelPDFGenerator:
     """
 
     def __init__(self, filename, config, page_size=letter):
-        self.label_template = config.get("label_template", "label001.svg")
+        original_label_template = config.get("label_template", "label001.svg")
+        self.label_template = resource_path(original_label_template)
         self.label_color = config.get("label_color", "#FF0000")  # Color in RGB
         self.label_color_fill = config.get("label_color_fill", "#FF0000")  # Color in RGB
         self.label_color_fill_opacity = config.get("label_color_fill_opacity", 0.25)
