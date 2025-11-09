@@ -49,7 +49,7 @@ class DiscogsLabelApp:
         self.config["discogs_user_token"] = self.token_entry.get()
         self.config["discogs_collection_folder"] = self.folder_entry.get()
         with open(CONFIG_FILE, "w") as f:
-            yaml.dump(config, f)
+            yaml.dump(self.config, f)
 
     def generate_labels(self):
         self.save_config()
