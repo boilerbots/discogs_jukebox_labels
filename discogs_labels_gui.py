@@ -24,11 +24,31 @@ class DiscogsLabelApp:
         self.folder_entry = ttk.Entry(root, width=50)
         self.folder_entry.grid(row=1, column=1, padx=10, pady=5)
 
+        self.template_label = ttk.Label(root, text="Label Template:")
+        self.template_label.grid(row=2, column=0, padx=10, pady=5, sticky="w")
+        self.template_entry = ttk.Entry(root, width=50)
+        self.template_entry.grid(row=2, column=1, padx=10, pady=5)
+
+        self.color_label = ttk.Label(root, text="Label Color:")
+        self.color_label.grid(row=3, column=0, padx=10, pady=5, sticky="w")
+        self.color_entry = ttk.Entry(root, width=50)
+        self.color_entry.grid(row=3, column=1, padx=10, pady=5)
+
+        self.fill_color_label = ttk.Label(root, text="Fill Color:")
+        self.fill_color_label.grid(row=4, column=0, padx=10, pady=5, sticky="w")
+        self.fill_color_entry = ttk.Entry(root, width=50)
+        self.fill_color_entry.grid(row=4, column=1, padx=10, pady=5)
+
+        self.opacity_label = ttk.Label(root, text="Fill Opacity:")
+        self.opacity_label.grid(row=5, column=0, padx=10, pady=5, sticky="w")
+        self.opacity_entry = ttk.Entry(root, width=50)
+        self.opacity_entry.grid(row=5, column=1, padx=10, pady=5)
+
         self.generate_button = ttk.Button(root, text="Generate Labels", command=self.start_generation_thread)
-        self.generate_button.grid(row=2, column=0, columnspan=2, pady=10)
+        self.generate_button.grid(row=6, column=0, columnspan=2, pady=10)
 
         self.status_text = tk.Text(root, height=15, width=80)
-        self.status_text.grid(row=3, column=0, columnspan=2, padx=10, pady=10)
+        self.status_text.grid(row=7, column=0, columnspan=2, padx=10, pady=10)
         
         # Redirect stdout to the text widget
         sys.stdout = self.TextRedirector(self.status_text)
@@ -41,13 +61,29 @@ class DiscogsLabelApp:
         if os.path.exists(CONFIG_FILE):
             with open(CONFIG_FILE, "r") as f:
                 self.config = yaml.safe_load(f)
-                if self.config:
-                    self.token_entry.insert(0, self.config.get("discogs_user_token", ""))
-                    self.folder_entry.insert(0, self.config.get("discogs_collection_folder", ""))
+        
+        if not hasattr(self, 'config') or self.config is None:
+            self.config = {}
+
+        self.token_entry.insert(0, self.config.get("discogs_user_token", ""))
+        self.folder_entry.insert(0, self.config.get("discogs_collection_folder", ""))
+        self.template_entry.insert(0, self.config.get("label_template", "label001.svg"))
+        self.color_entry.insert(0, self.config.get("label_color", "#FF0000"))
+        self.fill_color_entry.insert(0, self.config.get("label_color_fill", "#FF0000"))
+        self.opacity_entry.insert(0, self.config.get("label_color_fill_opacity", "0.25"))
 
     def save_config(self):
         self.config["discogs_user_token"] = self.token_entry.get()
         self.config["discogs_collection_folder"] = self.folder_entry.get()
+        self.config["label_template"] = self.template_entry.get()
+        self.config["label_color"] = self.color_entry.get()
+        self.config["label_color_fill"] = self.fill_color_entry.get()
+        try:
+            opacity = float(self.opacity_entry.get())
+        except ValueError:
+            opacity = 0.25 # default back
+        self.config["label_color_fill_opacity"] = opacity
+        
         with open(CONFIG_FILE, "w") as f:
             yaml.dump(self.config, f)
 
