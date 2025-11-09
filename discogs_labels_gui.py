@@ -40,16 +40,14 @@ class DiscogsLabelApp:
     def load_config(self):
         if os.path.exists(CONFIG_FILE):
             with open(CONFIG_FILE, "r") as f:
-                config = yaml.safe_load(f)
-                if config:
-                    self.token_entry.insert(0, config.get("discogs_user_token", ""))
-                    self.folder_entry.insert(0, config.get("discogs_collection_folder", ""))
+                self.config = yaml.safe_load(f)
+                if self.config:
+                    self.token_entry.insert(0, self.config.get("discogs_user_token", ""))
+                    self.folder_entry.insert(0, self.config.get("discogs_collection_folder", ""))
 
     def save_config(self):
-        config = {
-            "discogs_user_token": self.token_entry.get(),
-            "discogs_collection_folder": self.folder_entry.get()
-        }
+        self.config["discogs_user_token"] = self.token_entry.get()
+        self.config["discogs_collection_folder"] = self.folder_entry.get()
         with open(CONFIG_FILE, "w") as f:
             yaml.dump(config, f)
 
