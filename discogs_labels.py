@@ -56,6 +56,12 @@ LABELS_PER_PAGE = LABELS_PER_ROW * LABELS_PER_COLUMN
 
 # --- PDF Label Generator ---
 
+def remove_text_in_parentheses(text):
+    """
+    Removes all text enclosed in parentheses (including the parentheses themselves)
+    from a given string. Handles non-nested parentheses.
+    """
+    return re.sub(r'\([^()]*\)', '', text)
 
 class JukeboxLabelPDFGenerator:
     """
@@ -73,6 +79,7 @@ class JukeboxLabelPDFGenerator:
         self.label_font_title = config.get("label_font_title", "Helvetica-Bold")
         self.label_font_artist = config.get("label_font_artist", "Helvetica")
         self.label_font_other = config.get("label_font_other", "Helvetica")
+        self.clean_artist_strings = config.get("clean_artist_strings", True)
         print(f"Initializing PDF generator: {filename}")
         self.c = canvas.Canvas(filename, pagesize=page_size)
         self.page_width, self.page_height = page_size
@@ -152,11 +159,14 @@ class JukeboxLabelPDFGenerator:
         # self.c.rect(x + ((LABEL_WIDTH-TITLE_WIDTH)/2), y + (LABEL_HEIGHT/2) - (TITLE_HEIGHT/2), TITLE_WIDTH, TITLE_HEIGHT)
 
         # Extract information from the discogs_client.Release object
+
         artist = (
             ", ".join([a.name for a in release.artists])
             if release.artists
             else "Unknown Artist"
         )
+        if (self.clean_artist_strings):
+            artist = remove_text_in_parentheses(artist)
         # title = release.title if release.title else "Unknown Title"
         label_name = "Unknown Label"
         catalog_number = "N/A"

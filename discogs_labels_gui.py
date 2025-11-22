@@ -44,8 +44,11 @@ class DiscogsLabelApp:
         self.opacity_entry = ttk.Entry(root, width=50)
         self.opacity_entry.grid(row=5, column=1, padx=10, pady=5)
 
+        self.sanitize = tk.BooleanVar()
+        self.check_button = ttk.Checkbutton(root, text="Sanitize Artist Names", variable=self.sanitize)
+        self.check_button.grid(row=6, column=0, columnspan=1, pady=10)
         self.generate_button = ttk.Button(root, text="Generate Labels", command=self.start_generation_thread)
-        self.generate_button.grid(row=6, column=0, columnspan=2, pady=10)
+        self.generate_button.grid(row=6, column=1, columnspan=1, pady=10)
 
         self.status_text = tk.Text(root, height=15, width=80)
         self.status_text.grid(row=7, column=0, columnspan=2, padx=10, pady=10)
@@ -71,6 +74,7 @@ class DiscogsLabelApp:
         self.color_entry.insert(0, self.config.get("label_color", "#FF0000"))
         self.fill_color_entry.insert(0, self.config.get("label_color_fill", "#FF0000"))
         self.opacity_entry.insert(0, self.config.get("label_color_fill_opacity", "0.25"))
+        self.sanitize.set(self.config.get("clean_artist_strings", True))
 
     def save_config(self):
         self.config["discogs_user_token"] = self.token_entry.get()
@@ -78,6 +82,7 @@ class DiscogsLabelApp:
         self.config["label_template"] = self.template_entry.get()
         self.config["label_color"] = self.color_entry.get()
         self.config["label_color_fill"] = self.fill_color_entry.get()
+        self.config["clean_artist_strings"] = self.sanitize.get()
         try:
             opacity = float(self.opacity_entry.get())
         except ValueError:
