@@ -337,14 +337,15 @@ def main():
     # 'User-Agent' is automatically handled by discogs-client
     # 'request_limit_interval' and 'request_limit' can be adjusted if needed for rate limiting
     d = discogs_client.Client(
-        "DiscogsJukeboxLabelGenerator/1.0", user_token=DISCOGS_USER_TOKEN
+        "DiscogsJukeboxLabelGenerator/1.0",
     )
     pdf_generator = JukeboxLabelPDFGenerator(OUTPUT_PDF_FILENAME, config)
 
     try:
+        user = d.user("gerry2k25")
         # Get the user object
-        user = d.identity()
-        print(f"Authenticated as Discogs user: {user.username}")
+        #user = d.identity()
+        #print(f"Authenticated as Discogs user: {user.username}")
 
         # Find the target folder by name
         target_folder = None
@@ -367,21 +368,25 @@ def main():
         collection_releases = []
         print(f"Fetching collection for user: {user.username} from folder '{target_folder.name}'...")
         for release_item in target_folder.releases:
-            if len(release_item.release.tracklist) > 2:
+            try:
+                print(f"Title: {release_item.release.title}")
+                if len(release_item.release.tracklist) > 2:
+                    print(
+                        f"Examine: {release_item.release.title} by {', '.join([a.name for a in release_item.release.artists])}"
+                    )
+                    for track in release_item.release.tracklist:
+                        print(f"  Track {track.position} : {track.title}")
+                collection_releases.append(
+                    release_item.release
+                )  # Get the actual Release object from the CollectionRelease object
                 print(
-                    f"Examine: {release_item.release.title} by {', '.join([a.name for a in release_item.release.artists])}"
+                    f"Adding: {release_item.release.title} by {', '.join([a.name for a in release_item.release.artists])}"
                 )
-                for track in release_item.release.tracklist:
-                    print(f"  Track {track.position} : {track.title}")
-            collection_releases.append(
-                release_item.release
-            )  # Get the actual Release object from the CollectionRelease object
-            print(
-                f"Adding: {release_item.release.title} by {', '.join([a.name for a in release_item.release.artists])}"
-            )
-            if len(collection_releases) == test_count:
-                break
-            time.sleep(1.0)  # throttle our calls
+                if len(collection_releases) == test_count:
+                    break
+            except Exception as e:
+                print(f"Exception {e}")
+            time.sleep(5.0)  # throttle our calls
 
         if not collection_releases:
             print("No releases found in your collection. Exiting.")
